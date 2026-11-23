@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genie 4 Cost Calculator — How Much Does Genie 4 API Cost Per Second?</title>
+<meta name="description" content="Free Genie 4 cost calculator: estimate what Google's Genie 4 interactive world model costs on the Gemini API — about $0.10 per second, $6.05 per minute, $12.10 for a full 120-second session. No sign-up, everything runs in your browser.">
+<meta property="og:title" content="Genie 4 Cost Calculator — $0.10/sec, $6.05/min on the Gemini API">
+<meta property="og:description" content="Estimate Genie 4 API costs before you run a session. Video output is $17.50 per 1M tokens at 240 tokens per frame, 24 fps. Watch out: closing the tab does not stop billing — you must call complete().">
+<meta property="og:type" content="website">
+<style>
+  :root{
+    --bg:#0b1020; --panel:#131a2e; --panel2:#0f1526; --line:#26314f;
+    --text:#e8ecf6; --muted:#9aa7c4; --accent:#7aa2ff; --accent2:#38d6a5;
+    --warn:#ffb454; --err:#ff7a7a; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 18px 60px}
+  header{text-align:center;padding:26px 0 8px}
+  h1{font-size:2.1rem;margin:0 0 10px;letter-spacing:-.02em}
+  h1 .grad{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);max-width:640px;margin:0 auto;font-size:1.02rem}
+  .warnbox{background:#2a1f0d;border:1px solid #6b4d15;color:#ffd9a0;border-radius:var(--radius);padding:12px 16px;font-size:.95rem;margin:20px auto 0;max-width:680px}
+  .warnbox strong{color:var(--warn)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-top:26px}
+  label{display:block;font-size:.88rem;color:var(--muted);margin:14px 0 5px}
+  label:first-of-type{margin-top:0}
+  input[type=number],select{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:11px 12px;font-size:.97rem;font-family:inherit}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+  input[type=range]{width:100%;accent-color:var(--accent2)}
+  .hint{font-size:.8rem;color:var(--muted);margin-top:4px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  .results{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-align:center}
+  .stat .v{font-size:1.5rem;font-weight:700;color:var(--accent2)}
+  .stat .k{font-size:.82rem;color:var(--muted);margin-top:2px}
+  .stat.wide{grid-column:1 / -1;text-align:left}
+  .stat.wide .v{font-size:1.25rem}
+  .breakdown{margin-top:16px;font-size:.92rem;color:#cdd6ec}
+  .breakdown div{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .breakdown div:last-child{border-bottom:none}
+  .breakdown .total{font-weight:700;color:var(--text)}
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.93rem}
+  th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600}
+  td:last-child,th:last-child{text-align:right}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:var(--panel2)}
+  h2{font-size:1.35rem;margin:38px 0 10px;letter-spacing:-.01em}
+  p,li{color:#cdd6ec}
+  .muted{color:var(--muted)}
+  ul{padding-left:20px}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-top:10px}
+  summary{cursor:pointer;font-weight:600}
+  details p{margin:8px 0 2px}
+  footer{margin-top:44px;text-align:center;color:var(--muted);font-size:.85rem}
+  code{background:#070b16;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:.88em}
+  @media (max-width:560px){h1{font-size:1.6rem}.results{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Genie 4 <span class="grad">Cost Calculator</span></h1>
+    <p class="sub">How much does Google&rsquo;s Genie 4 interactive world model cost on the Gemini API? About <strong>$0.10 per second</strong> of streaming — $6.05 a minute, $12.10 for a full 120-second session. Type in your session plan and see the bill before you run it.</p>
+    <div class="warnbox">⚠️ <strong>Billing trap:</strong> the meter keeps running while the session is open. Closing the tab does <strong>not</strong> stop billing — you must call <code>complete()</code> to end the session and stop the charges.</div>
+  </header>
+
+  <section class="card" aria-label="Genie 4 cost calculator">
+    <label for="seconds">Session length: <span id="secondsLabel">60 seconds</span> (max 120 s per session)</label>
+    <input type="range" id="seconds" min="1" max="120" value="60" oninput="syncSeconds()">
+    <div class="hint">One Genie 4 session is capped at 120 seconds. Drag, or type an exact value below.</div>
+
+    <div class="row">
+      <div>
+        <label for="secondsNum">Session length (seconds)</label>
+        <input type="number" id="secondsNum" min="1" max="120" value="60" oninput="syncSecondsNum()">
+      </div>
+      <div>
+        <label for="sessions">Number of sessions</label>
+        <input type="number" id="sessions" min="1" max="10000" value="1">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="tier">API tier — daily session limit</label>
+        <select id="tier">
+          <option value="50">Tier 1 — 50 sessions / day</option>
+          <option value="250">Tier 2 — 250 sessions / day</option>
+          <option value="1000">Tier 3 — 1,000 sessions / day</option>
+        </select>
+        <div class="hint">Genie 4 has a daily session cap per tier. See what a full day at your cap costs.</div>
+      </div>
+      <div>
+        <label for="promptTokens">Prompt + reference image tokens (optional)</label>
+        <input type="number" id="promptTokens" min="0" value="0" placeholder="e.g. 1000">
+        <div class="hint">Input is $1.50 per 1M tokens. Leave 0 to price video output only.</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="textTokens">Text output tokens per session (optional)</label>
+        <input type="number" id="textTokens" min="0" value="0" placeholder="e.g. 500">
+        <div class="hint">Text output is $9.00 per 1M tokens. Most sessions are video-only — leave 0 if unsure.</div>
+      </div>
+      <div>
+        <label for="currencyNote">What&rsquo;s included</label>
+        <div class="hint" style="margin-top:11px">Video output includes synchronized 48&nbsp;kHz stereo audio at no extra charge. Prices are Google&rsquo;s Standard paid-tier rates, in USD.</div>
+      </div>
+    </div>
+
+    <div class="results">
+      <div class="stat"><div class="v" id="perSecond">$0.1008</div><div class="k">per second of video</div></div>
+      <div class="stat"><div class="v" id="perSession">$6.05</div><div class="k">per session</div></div>
+      <div class="stat"><div class="v" id="totalCost">$6.05</div><div class="k">total for all sessions</div></div>
+      <div class="stat wide"><div class="v" id="dailyCap">—</div><div class="k" id="dailyCapLabel">Cost of a full day at your tier&rsquo;s session cap</div></div>
+    </div>
+
+    <div class="breakdown" id="breakdown"></div>
+  </section>
+
+  <section class="card" aria-label="Quick reference">
+    <h2 style="margin-top:0">Quick reference — video output only</h2>
+    <p class="muted" style="margin-top:0">Click a row to load it into the calculator.</p>
+    <table>
+      <thead><tr><th>Session</th><th>Frames (24 fps)</th><th>Video tokens</th><th>Cost</th></tr></thead>
+      <tbody id="quickTable"></tbody>
+    </table>
+  </section>
+
+  <h2>How Genie 4 pricing works</h2>
+  <p>Genie 4 became available on the Gemini API (Interactions API) on <strong>November 19, 2026</strong>. It streams a playable 720p world at 24 frames per second with synchronized stereo audio. Google bills by <strong>emitted video output tokens</strong>, not by wall-clock seconds:</p>
+  <ul>
+    <li><strong>240 video tokens per frame</strong> &times; 24 fps = <strong>5,760 tokens per second</strong>.</li>
+    <li>Video output costs <strong>$17.50 per 1M tokens</strong> (audio included) &rarr; 5,760 &times; $17.50 / 1M = <strong>$0.1008 per second</strong>, about <strong>$6.05 per minute</strong>.</li>
+    <li>Text / reference-image input: <strong>$1.50 per 1M tokens</strong>. Text output: <strong>$9.00 per 1M tokens</strong>.</li>
+    <li>There is <strong>no free tier</strong> for Genie 4 — paid tier only. No Batch API, no Flex or Priority inference, no context caching.</li>
+    <li>One session is capped at <strong>120 seconds</strong> (about $12.10 of video). Daily session caps apply per tier: 50 / 250 / 1,000.</li>
+  </ul>
+
+  <h2>FAQ</h2>
+  <details><summary>Why is it billed per token instead of per second?</summary>
+  <p>Because the model bills on what it emits: every frame costs a fixed 240 video tokens. At a steady 24 fps that works out to a flat $0.1008/second, but the token basis is what Google actually meters — and it is why a session that stays open keeps charging even if nobody is steering the world.</p></details>
+  <details><summary>Does closing the tab stop the billing?</summary>
+  <p><strong>No.</strong> Billing runs for as long as the session stays open. You must call <code>complete()</code> on the interaction to end the session and stop the meter. Forgetting this is the most common way a Genie 4 bill surprises people.</p></details>
+  <details><summary>Is audio charged separately?</summary>
+  <p>No. The synchronized 48 kHz stereo audio is bundled into the video token rate — $17.50 per 1M video tokens covers both picture and sound.</p></details>
+  <details><summary>Can I use Genie 4 for free?</summary>
+  <p>Not through the API: Genie 4 is paid-tier only on the Gemini API, with no free tier. Google AI Ultra subscribers can use it in Project Genie instead, which is a separate subscription path.</p></details>
+  <details><summary>How accurate is this calculator?</summary>
+  <p>It uses Google&rsquo;s published Standard paid-tier rates as of November 19, 2026 ($17.50 / $1.50 / $9.00 per 1M tokens). Actual bills depend on your exact token counts — prompt length, reference images and any text output. Google may change prices; treat this as an estimate, not a quote.</p></details>
+
+  <footer>
+    <p>Prices: Google Gemini API pricing, Genie 4 Standard tier (Nov 19, 2026). This calculator runs entirely in your browser — nothing is uploaded or stored.</p>
+  </footer>
+
+</div>
+<script>
+  var VIDEO_RATE = 17.50;   // $ per 1M video output tokens, audio included
+  var INPUT_RATE = 1.50;    // $ per 1M input tokens
+  var TEXT_RATE  = 9.00;    // $ per 1M text output tokens
+  var TOKENS_PER_FRAME = 240;
+  var FPS = 24;
+  var TOKENS_PER_SECOND = TOKENS_PER_FRAME * FPS; // 5,760
+  var MAX_SECONDS = 120;
+
+  function money(n){ return "$" + n.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function num(n){ return n.toLocaleString("en-US"); }
+  function val(id, def){
+    var v = parseFloat(document.getElementById(id).value);
+    return (isNaN(v) || v < 0) ? def : v;
+  }
+
+  function calc(){
+    var seconds = Math.min(Math.max(val("secondsNum", 60), 1), MAX_SECONDS);
+    var sessions = Math.max(Math.floor(val("sessions", 1)), 1);
+    var tierCap = parseInt(document.getElementById("tier").value, 10);
+    var promptTokens = val("promptTokens", 0);
+    var textTokens = val("textTokens", 0);
+
+    var videoTokens = seconds * TOKENS_PER_SECOND;
+    var videoCost = videoTokens / 1e6 * VIDEO_RATE;
+    var inputCost = promptTokens / 1e6 * INPUT_RATE;
+    var textCost = textTokens / 1e6 * TEXT_RATE;
+    var perSession = videoCost + inputCost + textCost;
+    var total = perSession * sessions;
+    var dayCost = perSession * tierCap;
+
+    document.getElementById("perSecond").textContent = money(videoCost / seconds);
+    document.getElementById("perSession").textContent = money(perSession);
+    document.getElementById("totalCost").textContent = money(total);
+    document.getElementById("dailyCap").textContent =
+      money(dayCost) + "  ·  " + num(tierCap) + " × " + seconds + "s sessions";
+    document.getElementById("dailyCapLabel").textContent =
+      "Cost of a full day at your tier's session cap (" + num(tierCap) + " sessions)";
+
+    document.getElementById("breakdown").innerHTML =
+      "<div><span>Video output — " + num(videoTokens) + " tokens (" + seconds + "s × 5,760/s)</span><span>" + money(videoCost) + " / session</span></div>" +
+      "<div><span>Input — " + num(promptTokens) + " tokens @ $1.50/1M</span><span>" + money(inputCost) + " / session</span></div>" +
+      "<div><span>Text output — " + num(textTokens) + " tokens @ $9.00/1M</span><span>" + money(textCost) + " / session</span></div>" +
+      "<div class='total'><span>Total — " + sessions + " session" + (sessions > 1 ? "s" : "") + " of " + seconds + "s</span><span>" + money(total) + "</span></div>";
+  }
+
+  function syncSeconds(){
+    var s = document.getElementById("seconds").value;
+    document.getElementById("secondsNum").value = s;
+    document.getElementById("secondsLabel").textContent = s + " seconds";
+    calc();
+  }
+  function syncSecondsNum(){
+    var s = Math.min(Math.max(parseInt(document.getElementById("secondsNum").value, 10) || 60, 1), MAX_SECONDS);
+    document.getElementById("seconds").value = s;
+    document.getElementById("secondsLabel").textContent = s + " seconds";
+    calc();
+  }
+
+  (function buildQuickTable(){
+    var rows = [10, 30, 60, 90, 120];
+    var html = "";
+    rows.forEach(function(s){
+      var tokens = s * TOKENS_PER_SECOND;
+      var cost = tokens / 1e6 * VIDEO_RATE;
+      html += "<tr onclick=\"loadPreset(" + s + ")\"><td>" + s + " seconds</td><td>" + num(s * FPS) + "</td><td>" + num(tokens) + "</td><td>" + money(cost) + "</td></tr>";
+    });
+    document.getElementById("quickTable").innerHTML = html;
+  })();
+  function loadPreset(s){
+    document.getElementById("seconds").value = s;
+    document.getElementById("secondsNum").value = s;
+    document.getElementById("secondsLabel").textContent = s + " seconds";
+    calc();
+    window.scrollTo({top: 0, behavior: "smooth"});
+  }
+
+  ["secondsNum","sessions","tier","promptTokens","textTokens"].forEach(function(id){
+    document.getElementById(id).addEventListener("input", calc);
+    document.getElementById(id).addEventListener("change", calc);
+  });
+  calc();
+</script>
+</body>
+</html>
